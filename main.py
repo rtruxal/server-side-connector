@@ -1,6 +1,7 @@
-from button import instantiate as make_kill_btn
 from server import server_init
 import threading
+from kivy.app import App
+from kivy.uix.button import Button
 
 
 class MyThread(threading.Thread):
@@ -20,15 +21,33 @@ class MyThread(threading.Thread):
     def stop(self):
         self.running = False
 
-def main():
-    t1_stop = threading.Event()
-    t2_stop = threading.Event()
-    ts = MyThread(name='server', function=server_init, args=(2, t2_stop))
-    tb = MyThread(name='kill_button', function=make_kill_btn, args=(1, t1_stop))
-    threads = [ts, tb]
-    for proc in threads:
-        proc.start()
+
+class Butt(Button):
+    def __init__(self, *args, **kwargs):
+        super(Butt, self).__init__(**kwargs)
+
+    def when_pressed(self, *args):
+        print 'YOU KILLLLLLEDDDD ITTTTTTT'
+        print event.is_set()
+        event.set()
+        print event.is_set()
+
+class ServerWButtonApp(App):
+
+    def build(self):
+        butt = Butt(text='Shutdown Server')
+        butt.bind(on_press=butt.when_pressed)
+        #serv = Server(port_num=12345)
+        return butt
 
 
-if __name__ == '__main__':
-    main()
+def instantiate():
+    ServerWButtonApp().run()
+
+## LOOK AT THE THREAD ARGUMENTS TO SEE HOWTF YOU PASS AN EVENT FLAG PROPERLY.
+event = threading.Event()
+ts = MyThread(name='server', function=server_init, args=(1, event))
+tb = MyThread(name='kill_button', function=instantiate, args=(2, event))
+threads = [ts, tb]
+for proc in threads:
+    proc.start()
